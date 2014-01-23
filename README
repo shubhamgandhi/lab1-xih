@@ -1,0 +1,8 @@
+CS 111 Lab 1 
+
+Author: Xi Han 504136747
+
+Lab 1a
+* Limitation: program have undefined behavior if sequential simple
+              commands in subshells are not separated by semicolon
+              manually.
