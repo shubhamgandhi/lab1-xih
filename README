@@ -6,3 +6,16 @@ Lab 1a
 * Limitation: program have undefined behavior if sequential simple
               commands in subshells are not separated by semicolon
               manually.
+      
+Notes:
+input is in infix format -> gets converted to postfix format -> postfix to expression tree
+
+
+Lab 1b
+Execute expression tree
+Things to look into:
+              waitpid
+              fork
+              execvp
+              dup2
+              pipe
