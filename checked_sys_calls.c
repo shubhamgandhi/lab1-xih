@@ -48,9 +48,20 @@ checked_dup2(int oldfd, int newfd)
 }
 
 int
-checked_open(const char *pathname, int flags)
+checked_open2(const char *pathname, int flags)
 {
 	int retval = open(pathname, flags);
+	if (retval == -1) {
+		int errsv = errno;
+		error(1, errsv, "Open failed.");
+	}
+	return retval;
+}
+
+int
+checked_open3(const char *pathname, int flags, mode_t mode)
+{
+	int retval = open(pathname, flags, mode);
 	if (retval == -1) {
 		int errsv = errno;
 		error(1, errsv, "Open failed.");

@@ -7,7 +7,8 @@ pid_t checked_fork(void);
 pid_t checked_waitpid(pid_t pid, int *status, int options);
 int checked_pipe(int pipefd[2]);
 int checked_dup2(int oldfd, int newfd);
-int checked_open(const char *pathname, int flags);
+int checked_open2(const char *pathname, int flags);
+int checked_open3(const char *pathname, int flags, mode_t mode);
 int checked_close(int fd);
 int checked_execvp(const char *file, char *const argv[]);
 
