@@ -20,18 +20,20 @@ TIMETRASH_SOURCES = \
   binary_expression_tree_generator.c \
   infix_expression_generator.c \
   postfix_expression_generator.c \
-  infix_error_checker.c
+  infix_error_checker.c \
+  checked_sys_calls.c \
 
 TIMETRASH_OBJECTS = $(subst .c,.o,$(TIMETRASH_SOURCES))
 
 DIST_SOURCES = \
   $(TIMETRASH_SOURCES) alloc.h command.h command-internals.h Makefile \
-binary_expression_tree_generator.h \
+  binary_expression_tree_generator.h \
   infix_expression_generator.h \
   postfix_expression_generator.h \
   infix_error_checker.h \
-stack.h \
-structs.h \
+  stack.h \
+  structs.h \
+  checked_sys_calls.h \
   $(TESTS) check-dist README
 
 timetrash: $(TIMETRASH_OBJECTS)

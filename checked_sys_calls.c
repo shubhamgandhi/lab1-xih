@@ -1,7 +1,12 @@
 #include "checked_sys_calls.h"
 #include <errno.h>
+#include <error.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 pid_t
 checked_fork(void)
