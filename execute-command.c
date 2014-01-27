@@ -18,7 +18,7 @@ execute_command_normal(command_t cmd)
 				cmd->status = cmd->u.commands[1]->status;
 			}
 			else {
-				cmd->status = cmd->u.commands[1]->status;
+				cmd->status = cmd->u.commands[0]->status;
 			}
 			return;
 		}
@@ -40,7 +40,7 @@ execute_command_normal(command_t cmd)
 				cmd->status = cmd->u.commands[1]->status;
 			}
 			else {
-				cmd->status = cmd->u.commands[1]->status;
+				cmd->status = cmd->u.commands[0]->status;
 			}
 			return;
 		}
