@@ -12,12 +12,53 @@ execute_command_normal(command_t cmd)
 {
 	switch (cmd->type) {
 		case AND_COMMAND: {
+			pid_t left_child_pid = checked_fork();
+			if(left_child_pid == 0) {
+				execute_command_normal(cmd->u.commands[0]);
+			}
+			else {
+				checked_waitpid(left_child_pid, &cmd->u.commands[0]->status, 0);
+				if(cmd->u.commands[0]->status == 0) {
+					execute_command_normal(cmd->u.commands[1]);
+					cmd->status = cmd->u.commands[1]->status;
+				}
+				else{
+					cmd->status = cmd->u.commands[0]->status;
+				}
+			}
+			return;
 		}
             
 		case SEQUENCE_COMMAND: {
+			pid_t left_child_pid = checked_fork();
+			if(left_child_pid == 0) {
+				execute_command_normal(cmd->u.commands[0]);
+			}
+			
+			pid_t right_child_pid = checked_fork();
+			if(right_child_pid == 0) {
+				execute_command_normal(cmd->u.commands[1]);
+			}
+			return;
 		}
             
 		case OR_COMMAND: {
+			case AND_COMMAND: {
+			pid_t left_child_pid = checked_fork();
+			if(left_child_pid == 0) {
+				execute_command_normal(cmd->u.commands[0]);
+			}
+			else {
+				checked_waitpid(left_child_pid, &cmd->u.commands[0]->status, 0);
+				if(cmd->u.commands[0]->status != 0) {
+					execute_command_normal(cmd->u.commands[1]);
+					cmd->status = cmd->u.commands[1]->status;
+				}
+				else{
+					cmd->status = cmd->u.commands[0]->status;
+				}
+			}
+			return;
 		}
             
 		case PIPE_COMMAND: {
