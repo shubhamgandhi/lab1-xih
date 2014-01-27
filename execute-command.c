@@ -35,10 +35,11 @@ execute_command_normal(command_t cmd)
 				execute_command_normal(cmd->u.commands[0]);
 			}
 			
-			pid_t right_child_pid = checked_fork();
-			if(right_child_pid == 0) {
+			else {
+				checked_waitpid(left_child_pid, &cmd->u.commands[0]->status, 0);
 				execute_command_normal(cmd->u.commands[1]);
 			}
+
 			return;
 		}
             
