@@ -583,3 +583,64 @@ generate_infix_expr (int (*get_next_byte) (void *),
     *array_length = expressions_len;
     return expressions;
 }
+
+/*
+struct expression **
+generate_infix_expr_v2 (int (*get_next_byte) (void *),
+                     void *get_next_byte_argument,
+                     size_t *array_length)
+{
+    char current_byte = get_next_byte(get_next_byte_argument); // Setup the current byte cursor.
+    char next_byte = get_next_byte(get_next_byte_argument); // Setup the byte ahead.
+    size_t line_number = 1; // Setup the line number indicator.
+    
+    // Setup the expressions array.
+    struct expression ** expressions_array = checked_malloc(INIT_LENGTH * sizeof(struct expression *));
+    size_t expression_array_length = 0;
+    size_t expression_array_max_length = INIT_LENGTH;
+    
+    // Setup the string buffer and the expression structure.
+    char *string_buffer = checked_malloc(INIT_LENGTH * sizeof(char));
+    size_t string_buffer_length = 0;
+    size_t string_buffer_max_length = INIT_LENGTH;
+    
+    struct expression *expression = checked_malloc(sizeof(struct expression));
+    expression->expr = checked_malloc(INIT_LENGTH * sizeof(struct expr_element));
+    expression->length = 0;
+    expression->maxlen = INIT_LENGTH;
+    expression->lineno = line_number;
+    
+    enum status {
+        // TO-DO: add status enumeration.
+        NEW_EXPRESSION,
+        
+    };
+    // TO-DO: add parser code.
+    enum status parsing_status = NEW_EXPRESSION;
+    
+    while (current_byte != EOF) {
+        switch (parsing_status) {
+            case NEW_EXPRESSION: {
+                switch (current_byte) {
+                    case ' ':
+                    case '\t':
+                    {
+                        break; // Silently ingore the character.
+                    }
+                        
+                    case '\n':
+                    {
+                        line_number++; // 
+                    }
+                        
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+    return expressions_array;
+    
+}
+*/

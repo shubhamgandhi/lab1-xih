@@ -1,10 +1,7 @@
 #ifndef __CHECKED_SYS_CALLS_H__
 #define __CHECKED_SYS_CALLS_H__
 #include <unistd.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
-
 // Checked system calls for Lab 1b.
 pid_t checked_fork(void);
 pid_t checked_waitpid(pid_t pid, int *status, int options);

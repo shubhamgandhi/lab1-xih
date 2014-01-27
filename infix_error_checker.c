@@ -38,8 +38,7 @@ infix_error_checker (struct expression ** exps, size_t array_len)
                     if (j == exps[i]->length - 1 || !strcmp(exps[i]->expr[j + 1].content, ")")) {
                         exps[i]->expr[j].content[0] = ' ';
                     }
-                    if (j == 0 || (exps[i]->expr[j - 1].type != OPERAND
-					     && exps[i]->expr[j - 1].content[0] != ')')) {
+                    if (j == 0 || exps[i]->expr[j - 1].type != OPERAND) {
                         fprintf(stderr, "%zu: no word before a semicolon.\n", linenum);
                         exit(1);
                     }

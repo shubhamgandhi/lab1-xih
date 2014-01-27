@@ -3,6 +3,7 @@
 #include "command.h"
 #include "command-internals.h"
 #include <error.h>
+#include <stdlib.h>
 #include "checked_sys_calls.h"
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -21,8 +22,31 @@ execute_command_normal(command_t cmd)
 		}
             
 		case PIPE_COMMAND: {
+            // Set up the pipe.
+            int pipefd[2];
+            checked_pipe(pipefd);
+            pid_t left_child_pid = checked_fork();
+            if (left_child_pid == 0) {
+                // In the process of left child.
+                checked_close(pipefd[0]);
+                checked_close(1);
+                checked_dup2(pipefd[1], 1);
+                execute_command_normal(cmd->u.command[0]);
+                checked_close(pipefd[1]);
+                exit(cmd->u.command[0]->status);
+            } else {
+                // In the process of the shell.
+                checked_waitpid(left_child_pid, &cmd->u.command[0]->status, 0);
+                checked_close(pipefd[1]);
+                checked_close(0);
+                checked_dup2(pipefd[0], 0);
+                execute_command_normal(cmd->u.command[1]);
+                checked_close(pipefd[0]);
+                cmd->status = cmd->u.command[1]->status;
+            }
+            break;
 		}
-            
+        
 		case SIMPLE_COMMAND: {
 			// Simple command is the base case of the recursive call.
 			
@@ -50,10 +74,22 @@ execute_command_normal(command_t cmd)
 				checked_waitpid(child_pid, &child_retval, 0);
 				cmd->status = child_retval; // Set the return value.
 			}
+            break;
 		}
             
 		case SUBSHELL_COMMAND: {
+            // Subshell command
+            pid_t child_pid = checked_fork();
+            if (child_pid == 0) {
+                execute_command_normal(cmd->u.subshell_command);
+                exit(cmd->u.subshell_command->status);
+            } else {
+                checked_waitpid(child_pid, &cmd->u.subshell_command->status, 0);
+                cmd->status = cmd->u.subshell_command->status;
+            }
+            break;
 		}
+        
 	}
 }
 
