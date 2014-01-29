@@ -215,6 +215,7 @@ generate_infix_expr (int (*get_next_byte) (void *),
             || next_byte == '+'
             || next_byte == ','
             || next_byte == '-'
+            || next_byte == '_'
             || next_byte == '.'
             || next_byte == '/'
             || next_byte == ':'

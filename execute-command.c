@@ -12,14 +12,38 @@ void
 execute_command_normal(command_t cmd)
 {
 	switch (cmd->type) {
-		case AND_COMMAND: {
-		}
+        case AND_COMMAND: {
+            execute_command_normal(cmd->u.command[0]);
+            if(cmd->u.command[0]->status == 0) {
+                execute_command_normal(cmd->u.command[1]);
+                cmd->status = cmd->u.command[1]->status;
+            }
+            else {
+                cmd->status = cmd->u.command[0]->status;
+            }
+            return;
+        }
             
-		case SEQUENCE_COMMAND: {
-		}
+        case SEQUENCE_COMMAND: {
+            execute_command_normal(cmd->u.command[0]);
+            cmd->status = cmd->u.command[0]->status;
+            execute_command_normal(cmd->u.command[1]);
+            cmd->status = cmd->u.command[1]->status;
             
-		case OR_COMMAND: {
-		}
+            return;
+        }
+            
+        case OR_COMMAND: {
+            execute_command_normal(cmd->u.command[0]);
+            if(cmd->u.command[0]->status != 0) {
+                execute_command_normal(cmd->u.command[1]);
+                cmd->status = cmd->u.command[1]->status;
+            }
+            else {
+                cmd->status = cmd->u.command[0]->status;
+            }
+            return;
+        }
             
 		case PIPE_COMMAND: {
             // Set up the pipe.
@@ -70,9 +94,9 @@ execute_command_normal(command_t cmd)
 				checked_execvp(cmd->u.word[0], cmd->u.word); // Execute the command.
                 
 			} else {
-				int child_retval; // Record the returned value of the child.
-				checked_waitpid(child_pid, &child_retval, 0);
-				cmd->status = child_retval; // Set the return value.
+                int child_retval; // Record the returned value of the child.
+                checked_waitpid(child_pid, &child_retval, 0);
+                cmd->status = child_retval; // Set the return value.
 			}
             break;
 		}
@@ -81,8 +105,24 @@ execute_command_normal(command_t cmd)
             // Subshell command
             pid_t child_pid = checked_fork();
             if (child_pid == 0) {
+                
+                // Set input and output if availble.
+                if (cmd->input) {
+                    int input_fd = checked_open2(cmd->input, O_RDONLY);
+                    checked_dup2(input_fd, 0);
+                    checked_close(input_fd);
+                }
+                
+                if (cmd->output) {
+                    int output_fd = checked_open3(cmd->output, O_WRONLY|O_CREAT,
+                                                  0666);
+                    checked_dup2(output_fd, 1);
+                    checked_close(output_fd);
+                }
+                
                 execute_command_normal(cmd->u.subshell_command);
                 exit(cmd->u.subshell_command->status);
+                
             } else {
                 checked_waitpid(child_pid, &cmd->u.subshell_command->status, 0);
                 cmd->status = cmd->u.subshell_command->status;
