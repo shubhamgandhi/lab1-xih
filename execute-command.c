@@ -13,18 +13,25 @@ execute_command_normal(command_t cmd)
 {
 	switch (cmd->type) {
         case AND_COMMAND: {
+        	//execute left command and check if it returns with status 0
             execute_command_normal(cmd->u.command[0]);
             if(cmd->u.command[0]->status == 0) {
+            	//left command returned with status 0 so execute right command
                 execute_command_normal(cmd->u.command[1]);
+                //set exit status of execute function to exit status of right child
                 cmd->status = cmd->u.command[1]->status;
             }
             else {
+            	//left command returned non-0
+            	//set exit status of execute function to exit status of left command
                 cmd->status = cmd->u.command[0]->status;
             }
             return;
         }
             
         case SEQUENCE_COMMAND: {
+        	//simply execute left and right child in sequence
+        	//setting exit statuses as they return
             execute_command_normal(cmd->u.command[0]);
             cmd->status = cmd->u.command[0]->status;
             execute_command_normal(cmd->u.command[1]);
@@ -34,12 +41,17 @@ execute_command_normal(command_t cmd)
         }
             
         case OR_COMMAND: {
+        	//execute left command and check if it returns with status non-0
             execute_command_normal(cmd->u.command[0]);
             if(cmd->u.command[0]->status != 0) {
+            	//left command returned with status non-0 so execute right command
                 execute_command_normal(cmd->u.command[1]);
+                //set exit status of execute function to exit status of right child
                 cmd->status = cmd->u.command[1]->status;
             }
             else {
+            	//left command returned 0
+            	//set exit status of execute function to exit status of left command
                 cmd->status = cmd->u.command[0]->status;
             }
             return;
