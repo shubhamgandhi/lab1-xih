@@ -43,6 +43,7 @@ append_element (command_t parent, command_t ele) {
 command_stream_t
 generate_expression_tree (struct expression ** postfix_expr, size_t array_len)
 {
+    // Initialize tree. Allocate initial amount of space
     command_stream_t stream = checked_malloc(sizeof(struct command_stream));
     command_t *commands = checked_malloc(INIT_LENGTH * sizeof(command_t));
     stream->commands = commands;
@@ -50,16 +51,18 @@ generate_expression_tree (struct expression ** postfix_expr, size_t array_len)
     stream->maxlen = INIT_LENGTH;
     stream->cmdind = 0;
     
+    // Iterate through postfix expression to generate tree
     size_t i, k;
     for (i = 0; i < array_len; i++) {
+        // Initialize tree with null pointers
         command_t root = NULL;
         int j;
         char **in_ptr = NULL;
         char **out_ptr = NULL;
         for (j = (int) postfix_expr[i]->length - 1 ; j >= 0; j--) {
-            
+            // If current element in postfix array is an operand
             if (postfix_expr[i]->expr[j].type == OPERAND) {
-                
+                // Allocate space the operand
                 size_t *spaces_pos = checked_malloc(INIT_LENGTH * sizeof(size_t));
                 size_t spaces_array_len = 0;
                 size_t spaces_array_maxlen = INIT_LENGTH;
@@ -93,6 +96,7 @@ generate_expression_tree (struct expression ** postfix_expr, size_t array_len)
                 
                 spaces_pos[spaces_array_len] = k;
                 spaces_array_len++;
+                // If
                 if (spaces_array_len == spaces_array_maxlen) {
                     size_t temp = spaces_array_maxlen * sizeof(size_t);
                     spaces_pos = checked_grow_alloc(spaces_pos, &temp);
