@@ -46,12 +46,12 @@ execute_command_normal(command_t cmd)
             if(cmd->u.command[0]->status != 0) {
             	//left command returned with status non-0 so execute right command
                 execute_command_normal(cmd->u.command[1]);
-                //set exit status of execute function to exit status of right child
+            	//Set status of command to most recently executed command
                 cmd->status = cmd->u.command[1]->status;
             }
             else {
             	//left command returned 0
-            	//set exit status of execute function to exit status of left command
+            	//Set status of command to most recently executed command
                 cmd->status = cmd->u.command[0]->status;
             }
             return;
@@ -64,17 +64,22 @@ execute_command_normal(command_t cmd)
             pid_t left_child_pid = checked_fork();
             if (left_child_pid == 0) {
                 // In the process of left child.
+                // Make sure file descriptors are closed before executing
                 checked_close(pipefd[0]);
                 checked_close(1);
+                // Duplicate STDOUT to read end of pipe
                 checked_dup2(pipefd[1], 1);
                 execute_command_normal(cmd->u.command[0]);
                 checked_close(pipefd[1]);
                 exit(cmd->u.command[0]->status);
             } else {
                 // In the process of the shell.
+                // Wait for left child to finish
                 checked_waitpid(left_child_pid, &cmd->u.command[0]->status, 0);
+                // Close file descriptors before using them
                 checked_close(pipefd[1]);
                 checked_close(0);
+                // Duplicate STDIN to write end of pipe
                 checked_dup2(pipefd[0], 0);
                 execute_command_normal(cmd->u.command[1]);
                 checked_close(pipefd[0]);
@@ -85,11 +90,10 @@ execute_command_normal(command_t cmd)
         
 		case SIMPLE_COMMAND: {
 			// Simple command is the base case of the recursive call.
-			
 			int child_pid = checked_fork();
 			if (child_pid == 0) {
                 
-                // Set input and output if availble.
+                // Set input and output if availble: redirection operators
                 if (cmd->input) {
                     int input_fd = checked_open2(cmd->input, O_RDONLY);
                     checked_dup2(input_fd, 0);
@@ -97,18 +101,19 @@ execute_command_normal(command_t cmd)
                 }
                 
                 if (cmd->output) {
-                    int output_fd = checked_open3(cmd->output, O_WRONLY|O_CREAT,
-                                                  0666);
+                    int output_fd = checked_open3(cmd->output, O_WRONLY|O_CREAT, 0666);
                     checked_dup2(output_fd, 1);
                     checked_close(output_fd);
                 }
                 
-				checked_execvp(cmd->u.word[0], cmd->u.word); // Execute the command.
+                // Execute command once imputs or outputs are set
+			checked_execvp(cmd->u.word[0], cmd->u.word);
                 
 			} else {
                 int child_retval; // Record the returned value of the child.
-                checked_waitpid(child_pid, &child_retval, 0);
-                cmd->status = child_retval; // Set the return value.
+                checked_waitpid(child_pid, &child_retval, 0);	// Waiting for command to finish
+		// Set status of command to return value of command
+                cmd->status = child_retval; 
 			}
             break;
 		}
@@ -117,7 +122,6 @@ execute_command_normal(command_t cmd)
             // Subshell command
             pid_t child_pid = checked_fork();
             if (child_pid == 0) {
-                
                 // Set input and output if availble.
                 if (cmd->input) {
                     int input_fd = checked_open2(cmd->input, O_RDONLY);
@@ -126,17 +130,19 @@ execute_command_normal(command_t cmd)
                 }
                 
                 if (cmd->output) {
-                    int output_fd = checked_open3(cmd->output, O_WRONLY|O_CREAT,
-                                                  0666);
+                    int output_fd = checked_open3(cmd->output, O_WRONLY|O_CREAT, 0666);
                     checked_dup2(output_fd, 1);
                     checked_close(output_fd);
                 }
-                
+                // Go into subshell by recursively executing into it
                 execute_command_normal(cmd->u.subshell_command);
+                // Exit with return value as the return value of subshell execution
                 exit(cmd->u.subshell_command->status);
                 
             } else {
+            	// Wait for the subshell to finish executing
                 checked_waitpid(child_pid, &cmd->u.subshell_command->status, 0);
+                // Set status of command to status of executed subshell 
                 cmd->status = cmd->u.subshell_command->status;
             }
             break;
