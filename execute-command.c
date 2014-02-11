@@ -15,8 +15,8 @@ int tasks_finished(int** waiting_vector, int tasks_num)
 	// loop through tasks to look for waiting tasks
 	for(int i = 0; i < tasks_num; i++)
 	{
-		// return 0 if any waiting tasks found
-		if(waiting_vector[1][i] != 0)
+		// return 0 if any unstarted or unfinished tasks found
+		if(waiting_vector[i][2] == 0)
 			return 0;
 	}
 	
@@ -28,7 +28,7 @@ int tasks_finished(int** waiting_vector, int tasks_num)
 void execute_time_travel(command_t* trees, int** dependency_graph, int** waiting_vector, int tasks_num)
 {
 	// Declare array of inital task PIDs, and clear it  before use
-	pid_t task_PIDS[tasks_num];
+	pid_t *task_PIDS = checked_malloc(sizeof(pid_t) * tasks_num);
 	for(int i = 0; i < tasks_num; i++)
 		task_PIDS[i] = 0;
 	
@@ -36,8 +36,10 @@ void execute_time_travel(command_t* trees, int** dependency_graph, int** waiting
 	for(int i = 0; i < tasks_num; i++)
 	{
 		// if unexecuted task with no depndencies found, fork and execute it
-		if(waiting_vector[i][1] == 0 && waiting_vector[i][2] == 0)
+		if(waiting_vector[i][0] == 0 && waiting_vector[i][1] == 0)
 		{
+			// Mark task as launched then fork and execute
+			waiting_vector[i][1] = 1;
 			task_PIDS[i] = checked_fork();
 			if (task_PIDS[i] == 0)
 				execute_command_normal(trees[i])
@@ -70,7 +72,7 @@ void execute_time_travel(command_t* trees, int** dependency_graph, int** waiting
 					if(dependency_graph[j][i] > 0)
 					{
 						dependency_graph[j][i]--;
-						waiting_vector[j][1]--;
+						waiting_vector[j][0]--;
 						
 					}
 				}
@@ -82,11 +84,13 @@ void execute_time_travel(command_t* trees, int** dependency_graph, int** waiting
 		for(int i = 0; i < tasks_num; i++)
 		{
 			// if unexecuted task with no depndencies found, fork and execute it
-			if(waiting_vector[i][1] == 0 && waiting_vector[i][2] == 0)
+			if(waiting_vector[i][0] == 0 && waiting_vector[i][1] == 0)
 			{
+				// Mark task as launched then fork and execute
+				waiting_vector[i][1] = 1;
 				task_PIDS[i] = checked_fork();
 				if (task_PIDS[i] == 0)
-					execute_command_normal(trees[i])
+					execute_command_normal(trees[i]);
 			}
 		}
 	}		
