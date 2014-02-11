@@ -8,6 +8,92 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+
+// Utility function that will return 1 if all tasks are finished
+int tasks_finished(int** waiting_vector, int tasks_num)
+{
+	// loop through tasks to look for waiting tasks
+	for(int i = 0; i < tasks_num; i++)
+	{
+		// return 0 if any waiting tasks found
+		if(waiting_vector[1][i] != 0)
+			return 0;
+	}
+	
+	// if no waiting tasks found
+	return 1;
+}
+
+
+void execute_time_travel(command_t* trees, int** dependency_graph, int** waiting_vector, int tasks_num)
+{
+	// Declare array of inital task PIDs, and clear it  before use
+	pid_t task_PIDS[tasks_num];
+	for(int i = 0; i < tasks_num; i++)
+		task_PIDS[i] = 0;
+	
+	// Look through vector table for unexecute tasks with no dependency and execute them
+	for(int i = 0; i < tasks_num; i++)
+	{
+		// if unexecuted task with no depndencies found, fork and execute it
+		if(waiting_vector[i][1] == 0 && waiting_vector[i][2] == 0)
+		{
+			task_PIDS[i] = checked_fork();
+			if (task_PIDS[i] == 0)
+				execute_command_normal(trees[i])
+		}
+	}
+	
+	// Loop until all tasks are done
+	while(!tasks_finished(waiting_vector, tasks_num))
+	{
+		int child_retval;
+		// Wait for any child to finish
+		pid_t returned_child = checked_waitpid(0, &child_retval, 0);
+		
+		// find PID of returned child and update the status, graph, vector
+		for(int i = 0; i < tasks_num; i++)
+		{
+			if(returned_child == task_PIDS[i])
+			{
+				// Set status of executed tree to return value of command
+				trees[i]->status = child_retval; 
+				
+				// Update waiting vector to indicate that returnd child was executed
+				waiting_vector[i][2] = 1;
+				
+				// Update dependency graph
+				for(int j = 0; j < tasks_num; i++)
+				{
+					// decrement dependency if row depends on executed column
+					// also decrement dependency in waiting wector for same row
+					if(dependency_graph[j][i] > 0)
+					{
+						dependency_graph[j][i]--;
+						waiting_vector[j][1]--;
+						
+					}
+				}
+			}
+			break;
+		}
+		
+		// Loop through tasks again to find those ready to be executed
+		for(int i = 0; i < tasks_num; i++)
+		{
+			// if unexecuted task with no depndencies found, fork and execute it
+			if(waiting_vector[i][1] == 0 && waiting_vector[i][2] == 0)
+			{
+				task_PIDS[i] = checked_fork();
+				if (task_PIDS[i] == 0)
+					execute_command_normal(trees[i])
+			}
+		}
+	}		
+}
+
+
+
 void
 execute_command_normal(command_t cmd)
 {
